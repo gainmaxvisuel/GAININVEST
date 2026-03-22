@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Mes VIP</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+    margin:0;
+    background:#020617;
+    color:white;
+    font-family:Arial;
+    padding:10px;
+    padding-bottom:80px;
+}
+
+/* TITRE */
+.title{
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+
+/* VIP CARD */
+.vip{
+    background:#1e293b;
+    margin-bottom:15px;
+    padding:15px;
+    border-radius:15px;
+    display:flex;
+    gap:15px;
+    align-items:center;
+}
+
+.vip img{
+    width:100px;
+    height:100px;
+    border-radius:12px;
+}
+
+.vip-info{
+    flex:1;
+}
+
+.vip-info h3{
+    margin:0;
+    font-size:16px;
+}
+
+.vip-info p{
+    margin:4px 0;
+    font-size:13px;
+    color:#cbd5f5;
+}
+
+.status{
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    display:inline-block;
+}
+
+.active{
+    background:#22c55e;
+}
+
+.finished{
+    background:#ef4444;
+}
+
+/* MENU */
+.menu{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    background:#020617;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
+}
+
+.menu div{
+    text-align:center;
+    font-size:11px;
+}
+
+.menu img{
+    width:24px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="title">Mes VIP actifs</div>
+
+<div id="vipList">Chargement...</div>
+
+<!-- MENU -->
+<div class="menu">
+    <div onclick="go('acceuil.html')">
+        <img src="menu-home.png"><p>Accueil</p>
+    </div>
+
+    <div onclick="go('portefeuille.html')">
+        <img src="menu-wallet.png"><p>Portefeuille</p>
+    </div>
+
+    <div onclick="go('equipe.html')">
+        <img src="menu-team.png"><p>Équipe</p>
+    </div>
+
+    <div onclick="go('profil.html')">
+        <img src="menu-profile.png"><p>Profil</p>
+    </div>
+</div>
+
+<script>
+
+function go(page){
+    window.location.href = page;
+}
+
+/* SUPABASE */
+const supabaseClient = supabase.createClient(
+"https://wkpwfvuuadrgumssrkgk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+/* LOAD VIP */
+async function loadVIP(){
+
+    let { data:{user} } = await supabaseClient.auth.getUser();
+    if(!user) return;
+
+    let { data, error } = await supabaseClient
+    .from("user_vips")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending:false });
+
+    if(error){
+        document.getElementById("vipList").innerHTML = "Erreur de chargement";
+        return;
+    }
+
+    if(!data || data.length === 0){
+        document.getElementById("vipList").innerHTML = "Aucun VIP actif";
+        return;
+    }
+
+    let html="";
+
+    data.forEach((v,i)=>{
+
+        // calcul statut
+        let statut = v.jours_restants > 0 ? "Actif" : "Terminé";
+
+        // couleur
+        let classe = v.jours_restants > 0 ? "active" : "finished";
+
+        html += `
+        <div class="vip">
+            <img src="vip${i+1}.png">
+
+            <div class="vip-info">
+                <h3>VIP</h3>
+                <p>Prix: ${v.prix} XOF</p>
+                <p>Gain journalier: ${v.revenu_journalier} XOF</p>
+                <p>Gain total: ${v.gains_total} XOF</p>
+                <p>Jours restants: ${v.jours_restants}</p>
+
+                <span class="status ${classe}">
+                    ${statut}
+                </span>
+            </div>
+        </div>
+        `;
+    });
+
+    document.getElementById("vipList").innerHTML = html;
+}
+
+loadVIP();
+
+</script>
+
+</body>
+</html>

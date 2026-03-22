@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<title>Connexion</title>
+
+<style>
+
+body{
+    background:linear-gradient(180deg,#020617,#0f172a);
+    font-family:Arial;
+    color:white;
+    padding:20px;
+}
+
+/* LOGO */
+.logo{
+    width:200px;
+    display:block;
+    margin:40px auto 10px;
+    filter:drop-shadow(0 0 10px rgba(250,204,21,0.4));
+}
+
+.subtitle{
+    text-align:center;
+    color:#facc15;
+    font-size:14px;
+    margin-bottom:25px;
+}
+
+/* INPUT */
+input{
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    background:#1e293b;
+    color:white;
+}
+
+input::placeholder{
+    color:#94a3b8;
+}
+
+/* BOUTON */
+.btn{
+    width:100%;
+    padding:15px;
+    background:linear-gradient(45deg,#f59e0b,#facc15);
+    border:none;
+    border-radius:12px;
+    color:black;
+    font-weight:bold;
+    font-size:16px;
+    margin-top:20px;
+    box-shadow:0 0 15px rgba(250,204,21,0.4);
+}
+
+/* MESSAGE */
+#message{
+    display:none;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:15px;
+    text-align:center;
+    font-weight:bold;
+}
+
+/* LIENS */
+span{
+    cursor:pointer;
+    color:#facc15;
+    font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<img src="gaininvest-logo.png" class="logo">
+<p class="subtitle">Investissez et gagnez   </p>
+
+<h2>Connexion</h2>
+
+<div id="message"></div>
+
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Mot de passe">
+
+<button onclick="login()" class="btn">Se connecter</button>
+
+<p style="text-align:center; margin-top:15px;">
+Tu n’as pas de compte ?
+<span onclick="goRegister()">S’inscrire</span>
+</p>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://wkpwfvuuadrgumssrkgk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+function showMessage(text, color){
+    let box = document.getElementById("message");
+    box.style.display = "block";
+    box.style.background = color;
+    box.innerText = text;
+}
+
+function goRegister(){
+    window.location.href = "register.html";
+}
+
+async function login(){
+
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value;
+
+    if(!email || !password){
+        showMessage("Remplis tous les champs", "#dc2626");
+        return;
+    }
+
+    let { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if(error){
+        showMessage("Email ou mot de passe incorrect", "#dc2626");
+        return;
+    }
+
+    showMessage("Connexion réussie", "gold");
+
+    setTimeout(()=>{
+        window.location.href = "acceuil.html";
+    },1500);
+}
+
+</script>
+
+</body>
+</html>

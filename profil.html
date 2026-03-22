@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Profil</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+    margin:0;
+    background:#020617;
+    color:white;
+    font-family:Arial;
+    padding:10px;
+    padding-bottom:90px;
+}
+
+/* CARD */
+.card{
+    background:linear-gradient(135deg,#1e293b,#020617);
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+}
+
+.value{
+    font-size:22px;
+    font-weight:bold;
+    color:#facc15;
+}
+
+.small{
+    font-size:13px;
+    color:#94a3b8;
+}
+
+/* BLOCS */
+.grid{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:15px;
+}
+
+.box{
+    width:32%;
+    background:#1e293b;
+    border-radius:12px;
+    text-align:center;
+    padding:15px 5px;
+    cursor:pointer;
+}
+
+.box img{
+    width:35px;
+    margin-bottom:8px;
+}
+
+/* LISTE */
+.item{
+    background:#1e293b;
+    padding:15px;
+    border-radius:12px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content:space-between;
+    cursor:pointer;
+}
+
+/* LOGOUT */
+.logout{
+    background:#ef4444;
+    text-align:center;
+    padding:15px;
+    border-radius:12px;
+    margin-top:15px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* MESSAGE */
+#msg{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#22c55e;
+    padding:10px 15px;
+    border-radius:10px;
+    display:none;
+}
+
+/* MENU */
+.menu{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    left:0;
+    background:#020617;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
+    border-top:1px solid #1e293b;
+}
+
+.menu img{
+    width:24px;
+}
+
+/* FLOAT SERVICE */
+.float-btn{
+    position:fixed;
+    bottom:80px;
+    right:15px;
+    background:#22c55e;
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    cursor:pointer;
+}
+
+.float-box{
+    position:fixed;
+    bottom:140px;
+    right:15px;
+    background:#1e293b;
+    border-radius:12px;
+    padding:10px;
+    display:none;
+}
+
+.float-box div{
+    padding:10px;
+    border-bottom:1px solid #334155;
+    cursor:pointer;
+}
+
+.float-box div:last-child{
+    border:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="msg"></div>
+
+<!-- CARD -->
+<div class="card">
+    <div class="small">Identifiant</div>
+    <div id="userCode" class="value">---</div>
+
+    <div class="small" style="margin-top:10px;">Solde</div>
+    <div id="solde" class="value">...</div>
+
+    <div class="small" style="margin-top:10px;">Total retiré</div>
+    <div id="totalRetrait" class="value">...</div>
+
+    <div class="small" style="margin-top:10px;">Email</div>
+    <div id="email">...</div>
+</div>
+
+<!-- BLOCS -->
+<div class="grid">
+
+    <div class="box" onclick="goHistorique()">
+        <img src="balance-history.png">
+        <div>Historique</div>
+    </div>
+
+    <div class="box" onclick="openTelegram()">
+        <img src="telegram.png">
+        <div>Telegram</div>
+    </div>
+
+    <div class="box" onclick="goCompte()">
+        <img src="bank.png">
+        <div>Compte</div>
+    </div>
+
+</div>
+
+<!-- LISTE -->
+<div class="item" onclick="changePassword()">
+    <span>Modifier mot de passe</span>
+    <span>›</span>
+</div>
+
+<div class="item" onclick="goVIP()">
+    <span>Mes VIP</span>
+    <span>›</span>
+</div>
+
+<div class="item" onclick="goHistorique()">
+    <span>Historique recharge</span>
+    <span>›</span>
+</div>
+
+<div class="item" onclick="goHistorique()">
+    <span>Historique retrait</span>
+    <span>›</span>
+</div>
+
+<div class="logout" onclick="logout()">
+    Déconnexion
+</div>
+
+<!-- FLOAT SERVICE -->
+<div class="float-btn" onclick="toggleFloat()">💬</div>
+
+<div id="floatBox" class="float-box">
+    <div onclick="openService1()">Service client 1</div>
+    <div onclick="openService2()">Service client 2</div>
+</div>
+
+<!-- MENU -->
+<div class="menu">
+
+<div onclick="goAccueil()">
+<img src="menu-home.png">
+</div>
+
+<div onclick="goRecharge()">
+<img src="btn-recharge.png">
+</div>
+
+<div onclick="goEquipe()">
+<img src="menu-team.png">
+</div>
+
+<div onclick="goProfil()">
+<img src="menu-profile.png">
+</div>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://wkpwfvuuadrgumssrkgk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+/* MESSAGE */
+function showMsg(text,color="#22c55e"){
+let msg=document.getElementById("msg");
+msg.innerText=text;
+msg.style.background=color;
+msg.style.display="block";
+setTimeout(()=>msg.style.display="none",3000);
+}
+
+/* LOAD */
+async function loadProfile(){
+
+let { data:{user} } = await supabaseClient.auth.getUser();
+
+if(!user){
+location.href="index.html";
+return;
+}
+
+let { data:u } = await supabaseClient
+.from("users")
+.select("*")
+.eq("id", user.id)
+.single();
+
+/* INFOS */
+document.getElementById("userCode").innerText =
+u.user_code || "----";
+
+document.getElementById("solde").innerText =
+u.solde + " XOF";
+
+document.getElementById("email").innerText =
+u.email;
+
+/* RETRAITS */
+let { data:r } = await supabaseClient
+.from("retraits")
+.select("montant_net")
+.eq("user_id", user.id)
+.eq("statut","valide");
+
+let total=0;
+r?.forEach(x=> total+=x.montant_net);
+
+document.getElementById("totalRetrait").innerText =
+total + " XOF";
+
+}
+
+/* TELEGRAM */
+function openTelegram(){
+window.open("https://t.me/gaininvestissemen","_blank");
+}
+
+/* FLOAT */
+function toggleFloat(){
+let box=document.getElementById("floatBox");
+box.style.display = box.style.display==="block" ? "none" : "block";
+}
+
+document.addEventListener("click",(e)=>{
+if(!e.target.closest(".float-btn") && !e.target.closest(".float-box")){
+document.getElementById("floatBox").style.display="none";
+}
+});
+
+function openService1(){
+window.open("https://t.me/gaininvest1","_blank");
+}
+
+function openService2(){
+window.open("https://t.me/GAININVEST2","_blank");
+}
+
+/* NAV */
+function goAccueil(){location.href="acceuil.html";}
+function goRecharge(){location.href="recharge.html";}
+function goEquipe(){location.href="equipe.html";}
+function goProfil(){location.href="profil.html";}
+function goVIP(){location.href="mes-vip.html";}
+function goCompte(){location.href="compte.html";}
+function goHistorique(){location.href="portefeuille.html";}
+
+/* LOGOUT */
+async function logout(){
+await supabaseClient.auth.signOut();
+location.href="index.html";
+}
+
+window.onload = loadProfile;
+
+</script>
+
+</body>
+</html>

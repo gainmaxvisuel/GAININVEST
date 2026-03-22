@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Retrait</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+  margin:0;
+  background:#020617;
+  color:white;
+  font-family:Arial;
+}
+
+.container{
+  padding:15px;
+}
+
+.header{
+  margin-bottom:15px;
+}
+.back{
+  background:#1e293b;
+  padding:8px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  display:inline-block;
+}
+
+.card{
+  background:#1e293b;
+  padding:20px;
+  border-radius:15px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  background:#020617;
+  color:white;
+  font-size:16px;
+}
+
+.details{
+  margin-top:10px;
+  color:#94a3b8;
+  font-size:14px;
+  line-height:1.6;
+}
+
+.bank-box{
+  background:#020617;
+  padding:12px;
+  border-radius:10px;
+  margin-top:10px;
+  border:1px solid #1e293b;
+}
+.bank-box b{
+  color:#22c55e;
+}
+
+/* BUTTON */
+.btn{
+  width:100%;
+  padding:14px;
+  background:#22c55e;
+  border:none;
+  border-radius:10px;
+  margin-top:15px;
+  font-weight:bold;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.btn:disabled{
+  opacity:0.6;
+  cursor:not-allowed;
+}
+
+.loader-btn{
+  width:16px;
+  height:16px;
+  border:3px solid white;
+  border-top:3px solid transparent;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg);}
+}
+
+/* MESSAGE */
+.message{
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  text-align:center;
+  display:none;
+}
+
+.success{background:#16a34a;}
+.error{background:#dc2626;}
+
+/* CONDITIONS */
+.conditions{
+  margin-top:15px;
+  padding:12px;
+  font-size:12px;
+  border-top:1px solid #1e293b;
+}
+.conditions p{
+  margin:3px 0;
+  color:#94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="back" onclick="goAccueil()">← Retour</div>
+  </div>
+
+  <div class="card">
+
+    <h3>Retrait</h3>
+
+    <input type="number" id="montant" placeholder="Montant (XOF)">
+    <input type="password" id="password" placeholder="Mot de passe de transaction">
+
+    <div id="bankInfo"></div>
+
+    <div id="details" class="details"></div>
+
+    <button id="btnRetrait" class="btn" onclick="faireRetrait()">
+      Confirmer
+    </button>
+
+    <div id="msgBox" class="message"></div>
+
+    <!-- CONDITIONS -->
+    <div class="conditions">
+      <p>• Montant minimum : 1200 XOF</p>
+      <p>• Frais : 14%</p>
+      <p>• Délai : 1 à 24 heures</p>
+      <p>• Compte bancaire requis</p>
+      <p>• Mot de passe de transaction obligatoire</p>
+      <p>• VIP actif requis pour effectuer un retrait</p>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+  "https://wkpwfvuuadrgumssrkgk.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+// LOAD BANK INFO
+async function loadBankInfo(){
+  const { data:{user} } = await supabaseClient.auth.getUser();
+  if(!user) return;
+
+  const { data: account } = await supabaseClient
+    .from("withdrawal_accounts")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if(!account){
+    bankInfo.innerHTML = `<div class="bank-box">Aucun compte enregistré</div>`;
+    return;
+  }
+
+  let num = account.numero.slice(0,3) + "****" + account.numero.slice(-2);
+
+  bankInfo.innerHTML = `
+    <div class="bank-box">
+      <div><b>Nom :</b> ${account.nom}</div>
+      <div><b>Numéro :</b> ${num}</div>
+      <div><b>Opérateur :</b> ${account.operateur}</div>
+    </div>
+  `;
+}
+
+// CALCUL
+document.getElementById("montant").addEventListener("input", ()=>{
+  const montantInput = document.getElementById("montant");
+  let m = parseFloat(montantInput.value);
+
+  if(!m){
+    details.innerHTML = "";
+    return;
+  }
+
+  let frais = m * 0.14;
+  let net = m - frais;
+
+  details.innerHTML = `
+    Frais : ${frais.toFixed(0)} XOF<br>
+    Montant à recevoir : ${net.toFixed(0)} XOF
+  `;
+});
+
+// MESSAGE
+function showMessage(type, text){
+  msgBox.innerHTML = text;
+  msgBox.className = "message " + type;
+  msgBox.style.display = "block";
+}
+
+// NAV
+function goAccueil(){ window.location.href="acceuil.html"; }
+function goWallet(){ window.location.href="portefeuille.html"; }
+function goBank(){ window.location.href="compte-bancaire.html"; }
+
+// RETRAIT
+async function faireRetrait(){
+
+  const btn = document.getElementById("btnRetrait");
+  const montantInput = document.getElementById("montant");
+  const passwordInput = document.getElementById("password");
+
+  let montant = parseFloat(montantInput.value);
+  let password = passwordInput.value;
+
+  if(!montant || montant < 1200){
+    return showMessage("error","Le montant minimum est de 1200 XOF.");
+  }
+
+  if(!password){
+    return showMessage("error","Veuillez saisir votre mot de passe.");
+  }
+
+  // BLOQUER BOUTON
+  btn.disabled = true;
+  btn.innerHTML = `<div class="loader-btn"></div> Traitement...`;
+
+  try{
+
+    const { data:{user} } = await supabaseClient.auth.getUser();
+
+    const { data:userData } = await supabaseClient
+      .from("users")
+      .select("solde, vip_actif")
+      .eq("id", user.id)
+      .single();
+
+    if(!userData.vip_actif){
+      btn.disabled = false;
+      btn.innerHTML = "Confirmer";
+      return showMessage("error","VIP actif requis.");
+    }
+
+    const { data: account } = await supabaseClient
+      .from("withdrawal_accounts")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if(!account){
+      showMessage("error","Veuillez configurer votre compte bancaire.");
+      setTimeout(goBank,2000);
+      return;
+    }
+
+    if(account.transaction_password !== password){
+      btn.disabled = false;
+      btn.innerHTML = "Confirmer";
+      return showMessage("error","Mot de passe incorrect.");
+    }
+
+    if(userData.solde < montant){
+      btn.disabled = false;
+      btn.innerHTML = "Confirmer";
+      return showMessage("error","Solde insuffisant.");
+    }
+
+    let frais = montant * 0.14;
+    let net = montant - frais;
+
+    await supabaseClient.from("retraits").insert([{
+      user_id:user.id,
+      montant:montant,
+      frais:frais,
+      montant_net:net,
+      statut:"en_attente"
+    }]);
+
+    await supabaseClient
+      .from("users")
+      .update({ solde:userData.solde - montant })
+      .eq("id", user.id);
+
+    showMessage("success","Demande envoyée avec succès.<br>Traitement sous 1 à 24 heures.");
+
+    setTimeout(goWallet,2000);
+
+  }catch(e){
+    showMessage("error","Erreur système.");
+    console.log(e);
+    btn.disabled = false;
+    btn.innerHTML = "Confirmer";
+  }
+}
+
+// INIT
+window.onload = loadBankInfo;
+
+</script>
+
+</body>
+</html>

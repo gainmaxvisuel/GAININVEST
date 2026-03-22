@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<title>Inscription</title>
+
+<style>
+body{
+    background:linear-gradient(180deg,#020617,#0f172a);
+    font-family:Arial;
+    color:white;
+    padding:20px;
+}
+
+.logo{
+    width:200px;
+    display:block;
+    margin:40px auto 10px;
+    filter:drop-shadow(0 0 10px rgba(250,204,21,0.4));
+}
+
+.subtitle{
+    text-align:center;
+    color:#facc15;
+    font-size:14px;
+    margin-bottom:25px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    background:#1e293b;
+    color:white;
+}
+
+input::placeholder{
+    color:#94a3b8;
+}
+
+.phone-box{
+    display:flex;
+    align-items:center;
+    background:#1e293b;
+    border-radius:10px;
+    margin:10px 0;
+}
+
+.prefix{
+    padding:14px;
+    color:#facc15;
+    font-weight:bold;
+    background:#1e293b;
+    border:none;
+}
+
+.phone-input{
+    border:none;
+    outline:none;
+    flex:1;
+    padding:14px;
+    background:transparent;
+    color:white;
+}
+
+.btn{
+    width:100%;
+    padding:15px;
+    background:linear-gradient(45deg,#f59e0b,#facc15);
+    border:none;
+    border-radius:12px;
+    color:black;
+    font-weight:bold;
+    font-size:16px;
+    margin-top:20px;
+    box-shadow:0 0 15px rgba(250,204,21,0.4);
+    cursor:pointer;
+}
+
+.btn:disabled{
+    background:#999;
+}
+
+#message{
+    display:none;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:15px;
+    text-align:center;
+    font-weight:bold;
+}
+
+span{
+    cursor:pointer;
+    color:#facc15;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<img src="gaininvest-logo.png" class="logo">
+<p class="subtitle">Investissez et gagnez</p>
+
+<h2>Créer un compte</h2>
+
+<div id="message"></div>
+
+<input type="email" id="email" placeholder="Email">
+
+<div class="phone-box">
+    <select id="country" class="prefix">
+        <option value="">Choisir</option>
+        <option value="+226">🇧🇫 Burkina Faso (+226)</option>
+        <option value="+228">🇹🇬 Togo (+228)</option>
+        <option value="+229">🇧🇯 Bénin (+229)</option>
+        <option value="+225">🇨🇮 Côte d'Ivoire (+225)</option>
+        <option value="+223">🇲🇱 Mali (+223)</option>
+    </select>
+
+    <input type="number" id="phone" class="phone-input" placeholder="Numéro">
+</div>
+
+<input type="password" id="password" placeholder="Mot de passe">
+<input type="password" id="confirm" placeholder="Confirmer mot de passe">
+<input type="text" id="ref" placeholder="Code parrainage (optionnel)">
+
+<button id="btnRegister" onclick="register()" class="btn">S’inscrire</button>
+
+<p style="text-align:center; margin-top:15px;">
+Tu as déjà un compte ?
+<span onclick="goLogin()">Se connecter</span>
+</p>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://wkpwfvuuadrgumssrkgk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+function showMessage(text, color){
+    let box = document.getElementById("message");
+    box.style.display = "block";
+    box.style.background = color;
+    box.innerText = text;
+}
+
+function goLogin(){
+    window.location.href = "index.html";
+}
+
+async function register(){
+
+    let email = document.getElementById("email").value.trim();
+    let password = document.getElementById("password").value;
+    let confirm = document.getElementById("confirm").value;
+    let phone = document.getElementById("phone").value.trim();
+    let country = document.getElementById("country").value;
+    let referral_input = document.getElementById("ref").value.trim();
+
+    const btn = document.getElementById("btnRegister");
+
+    if(!email || !password || !phone){
+        showMessage("Remplis tous les champs", "#dc2626");
+        return;
+    }
+
+    if(!country){
+        showMessage("Sélectionne ton pays", "#dc2626");
+        return;
+    }
+
+    if(password !== confirm){
+        showMessage("Les mots de passe ne correspondent pas", "#dc2626");
+        return;
+    }
+
+    let fullPhone = country + phone;
+
+    btn.disabled = true;
+    btn.innerText = "Création...";
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                telephone: fullPhone,
+                ref: referral_input
+            }
+        }
+    });
+
+    if(error){
+        btn.disabled = false;
+        btn.innerText = "S’inscrire";
+
+        if(error.message.includes("User already registered")){
+            showMessage("Compte déjà existant", "orange");
+        } else {
+            showMessage(error.message, "#dc2626");
+        }
+        return;
+    }
+
+    showMessage("Inscription réussie", "green");
+
+    setTimeout(()=>{
+        window.location.href = "index.html";
+    },1500);
+}
+</script>
+
+</body>
+</html>

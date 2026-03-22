@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Recharge</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+/* (AUCUN CHANGEMENT CSS) */
+
+body{
+    margin:0;
+    background:#020617;
+    color:white;
+    font-family:Arial;
+    padding:15px;
+}
+
+.header{
+    font-size:18px;
+    margin-bottom:15px;
+    cursor:pointer;
+}
+
+.card{
+    background:#1e293b;
+    padding:15px;
+    border-radius:15px;
+}
+
+.amounts{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+.amount{
+    flex:1 1 30%;
+    padding:12px;
+    background:#020617;
+    border-radius:10px;
+    text-align:center;
+    cursor:pointer;
+}
+.amount.active{
+    border:2px solid #22c55e;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    margin-top:10px;
+    background:#020617;
+    color:white;
+}
+
+.btn{
+    width:100%;
+    padding:12px;
+    background:#22c55e;
+    border:none;
+    border-radius:10px;
+    color:white;
+    margin-top:15px;
+    cursor:pointer;
+}
+
+.message{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+  width:90%;
+  max-width:320px;
+  text-align:center;
+  z-index:9999;
+}
+
+.message.error{ border-left:5px solid #ef4444; }
+.message.success{ border-left:5px solid #22c55e; }
+.message.warning{ border-left:5px solid #facc15; }
+
+.loader{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(2,6,23,0.95);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+
+.spinner{
+  width:50px;
+  height:50px;
+  border:5px solid #1e293b;
+  border-top:5px solid #22c55e;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  100%{ transform:rotate(360deg); }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header" onclick="goBack()">← Retour</div>
+
+<!-- ETAPE 1 -->
+<div id="step1" class="card">
+<h3>Choisir un montant</h3>
+
+<div class="amounts">
+  <div class="amount" onclick="selectAmount(2000)">2000</div>
+  <div class="amount" onclick="selectAmount(4000)">4000</div>
+  <div class="amount" onclick="selectAmount(7000)">7000</div>
+  <div class="amount" onclick="selectAmount(10000)">10000</div>
+  <div class="amount" onclick="selectAmount(15000)">15000</div>
+</div>
+
+<input type="number" id="montant" placeholder="Entrer un montant">
+
+<p style="font-size:13px;color:#94a3b8;">
+Montant minimum : 2000 XOF
+</p>
+
+<button class="btn" onclick="goStep2()">Continuer</button>
+</div>
+
+<!-- ETAPE 2 -->
+<div id="step2" class="card" style="display:none">
+<h3>Paiement</h3>
+
+<!-- MODIFICATION ICI -->
+<select id="country">
+  <option value="">Choisir pays</option>
+  <option value="+226">🇧🇫 Burkina Faso (+226)</option>
+  <option value="+228">🇹🇬 Togo (+228)</option>
+  <option value="+229">🇧🇯 Bénin (+229)</option>
+  <option value="+225">🇨🇮 Côte d'Ivoire (+225)</option>
+  <option value="+223">🇲🇱 Mali (+223)</option>
+</select>
+
+<input id="numero" placeholder="Votre numéro">
+
+<input id="otp" placeholder="Entrer OTP">
+
+<p style="font-size:13px;color:#94a3b8;">
+Composez ce code :<br>
+<b id="code"></b><br><br>
+Puis insérez le OTP reçu
+</p>
+
+<button class="btn" onclick="payer()">Aller au paiement</button>
+<button class="btn" onclick="valider()">Valider</button>
+
+</div>
+
+<!-- LOADER -->
+<div id="loader" class="loader">
+  <div class="spinner"></div>
+  <p>Traitement en cours...</p>
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://wkpwfvuuadrgumssrkgk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+let montant = 0;
+
+function showMessage(text, type="success"){
+  const msg = document.createElement("div");
+  msg.className = "message " + type;
+  msg.innerText = text;
+  document.body.appendChild(msg);
+  setTimeout(()=>{ msg.remove(); },3000);
+}
+
+function selectAmount(val){
+  montant = val;
+  document.getElementById("montant").value = val;
+
+  document.querySelectorAll(".amount").forEach(el=>{
+    el.classList.remove("active");
+  });
+  event.target.classList.add("active");
+}
+
+function goStep2(){
+
+  montant = document.getElementById("montant").value;
+
+  if(!montant){
+    showMessage("Veuillez entrer un montant","warning");
+    return;
+  }
+
+  if(montant < 2000){
+    showMessage("Le montant minimum est 2000 XOF","error");
+    return;
+  }
+
+  document.getElementById("step1").style.display="none";
+  document.getElementById("step2").style.display="block";
+
+  document.getElementById("code").innerText = `*144*4*6*${montant}#`;
+}
+
+function payer(){
+  window.location.href = `tel:*144*4*6*${montant}#`;
+}
+
+function showLoader(){
+  document.getElementById("loader").style.display="flex";
+}
+function hideLoader(){
+  document.getElementById("loader").style.display="none";
+}
+
+async function valider(){
+
+  let numero = document.getElementById("numero").value;
+  let otp = document.getElementById("otp").value;
+
+  // MODIFICATION ICI
+  let country = document.getElementById("country").value;
+
+  if(!numero || !otp){
+    showMessage("Veuillez remplir tous les champs","warning");
+    return;
+  }
+
+  // MODIFICATION ICI
+  if(!country){
+    showMessage("Choisissez votre pays","warning");
+    return;
+  }
+
+  showLoader();
+
+  let { data:{user} } = await supabaseClient.auth.getUser();
+
+  let { error } = await supabaseClient
+  .from("recharges")
+  .insert([{
+    user_id:user.id,
+    numero: country + numero, // MODIFICATION
+    montant,
+    otp,
+    statut:"en_attente"
+  }]);
+
+  hideLoader();
+
+  if(error){
+    showMessage("Erreur lors de l'envoi","error");
+    return;
+  }
+
+  showSuccess();
+}
+
+function showSuccess(){
+  const msg = document.createElement("div");
+  msg.className="message success";
+  msg.innerHTML=`
+  Demande envoyée avec succès<br>
+  Délai : 1 à 3 minutes<br><br>
+  <button onclick="goWallet()" style="background:#22c55e;border:none;padding:10px;border-radius:8px;color:white;width:100%;">OK</button>
+  `;
+  document.body.appendChild(msg);
+}
+
+function goBack(){ window.location.href="acceuil.html"; }
+function goWallet(){ window.location.href="portefeuille.html"; }
+
+</script>
+
+</body>
+</html>

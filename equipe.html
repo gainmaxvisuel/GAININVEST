@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Équipe</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+    margin:0;
+    background:#020617;
+    color:white;
+    font-family:Arial;
+    padding:12px;
+    padding-bottom:90px;
+}
+
+/* CARD */
+.card{
+    background:linear-gradient(135deg,#1e293b,#020617);
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:12px;
+}
+
+.title{
+    font-size:15px;
+    color:#94a3b8;
+}
+
+.value{
+    font-size:24px;
+    font-weight:bold;
+    color:#facc15;
+}
+
+.input{
+    background:#020617;
+    padding:10px;
+    border-radius:10px;
+    margin-top:5px;
+    font-size:14px;
+    word-break:break-all;
+}
+
+/* BUTTON */
+.btn{
+    margin-top:8px;
+    padding:12px;
+    background:#facc15;
+    color:black;
+    text-align:center;
+    border-radius:10px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* TABLE */
+.table-box{
+    background:#1e293b;
+    border-radius:15px;
+    overflow:hidden;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+thead{
+    background:#020617;
+}
+
+th{
+    padding:12px;
+    font-size:13px;
+    color:#94a3b8;
+}
+
+td{
+    padding:14px;
+    text-align:center;
+    border-top:1px solid #334155;
+}
+
+.badge{
+    padding:5px 10px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.lvl1{ background:#22c55e; }
+.lvl2{ background:#3b82f6; }
+.lvl3{ background:#f97316; }
+
+.percent{
+    color:#facc15;
+    font-weight:bold;
+}
+
+/* MESSAGE COPY PRO */
+.copy-msg{
+    position:fixed;
+    bottom:100px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#22c55e;
+    color:white;
+    padding:10px 20px;
+    border-radius:10px;
+    display:none;
+}
+
+/* CONDITIONS */
+.conditions{
+    font-size:13px;
+    color:#cbd5f5;
+    margin-top:12px;
+    line-height:1.7;
+}
+
+/* MENU */
+.menu{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    background:#020617;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
+}
+
+.menu div{
+    text-align:center;
+    font-size:12px;
+    cursor:pointer;
+}
+
+.menu img{
+    width:22px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="copyMsg" class="copy-msg">Lien copié avec succès</div>
+
+<!-- TOTAL -->
+<div class="card">
+    <div class="title">Total commission</div>
+    <div id="totalCommission" class="value">0 XOF</div>
+</div>
+
+<!-- CODE -->
+<div class="card">
+    <div class="title">Votre code de parrainage</div>
+    <div id="refCode" class="input">Chargement...</div>
+</div>
+
+<!-- LIEN -->
+<div class="card">
+    <div class="title">Lien d'invitation</div>
+    <div id="refLink" class="input">Chargement...</div>
+    <div class="btn" onclick="copyLink()">Copier</div>
+</div>
+
+<!-- TABLE -->
+<div class="table-box">
+<table>
+<thead>
+<tr>
+    <th>Niveau</th>
+    <th>Commission</th>
+    <th>Personnes</th>
+    <th>Gains</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td><span class="badge lvl1">Niveau 1</span></td>
+<td class="percent">29%</td>
+<td id="lvl1_total">0</td>
+<td id="lvl1_gain">0 XOF</td>
+</tr>
+
+<tr>
+<td><span class="badge lvl2">Niveau 2</span></td>
+<td class="percent">2%</td>
+<td id="lvl2_total">0</td>
+<td id="lvl2_gain">0 XOF</td>
+</tr>
+
+<tr>
+<td><span class="badge lvl3">Niveau 3</span></td>
+<td class="percent">1%</td>
+<td id="lvl3_total">0</td>
+<td id="lvl3_gain">0 XOF</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- CONDITIONS -->
+<div class="conditions">
+<b>Comment fonctionnent les gains :</b><br><br>
+
+- 🔹 <b>Niveau 1 :</b>  
+Chaque personne que vous invitez directement vous rapporte <b>29%</b> de ses gains.<br><br>
+
+- 🔹 <b>Niveau 2 :</b>  
+Si votre filleul invite quelqu’un, vous gagnez <b>2%</b> sur ses activités.<br><br>
+
+- 🔹 <b>Niveau 3 :</b>  
+Vous gagnez <b>1%</b> sur les activités du troisième niveau.<br><br>
+
+- 💰 Les commissions sont ajoutées automatiquement selon les activités.
+</div>
+
+<!-- MENU -->
+<div class="menu">
+<div onclick="goAccueil()">
+<img src="menu-home.png"><div>Accueil</div>
+</div>
+<div onclick="goPortefeuille()">
+<img src="recharge-history.png"><div>Portefeuille</div>
+</div>
+<div onclick="goEquipe()">
+<img src="menu-team.png"><div>Équipe</div>
+</div>
+<div onclick="goProfil()">
+<img src="menu-profile.png"><div>Profil</div>
+</div>
+</div>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://wkpwfvuuadrgumssrkgk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+async function loadData(){
+
+let { data:{user}, error:userError } = await supabaseClient.auth.getUser();
+
+if(userError || !user){
+    location.href="index.html";
+    return;
+}
+
+/* 🔥 SOLUTION FIX */
+let { data:userData, error } = await supabaseClient
+.from("users")
+.select("*")
+.eq("email", user.email)
+.single();
+
+if(error || !userData){
+    document.getElementById("refCode").innerText = "Erreur";
+    return;
+}
+
+/* CODE */
+document.getElementById("refCode").innerText = userData.code_parrainage;
+
+/* LIEN */
+let link = "https://gaininvest.vercel.app/register.html?ref=" + userData.code_parrainage;
+document.getElementById("refLink").innerText = link;
+
+/* TOTAL */
+document.getElementById("totalCommission").innerText =
+(userData.total_commission || 0) + " XOF";
+
+/* PERSONNES */
+document.getElementById("lvl1_total").innerText =
+userData.nb_filleuls_niveau1 || 0;
+
+document.getElementById("lvl2_total").innerText =
+userData.nb_filleuls_niveau2 || 0;
+
+document.getElementById("lvl3_total").innerText =
+userData.nb_filleuls_niveau3 || 0;
+
+/* GAINS */
+document.getElementById("lvl1_gain").innerText =
+(userData.gain_niveau1 || 0) + " XOF";
+
+document.getElementById("lvl2_gain").innerText =
+(userData.gain_niveau2 || 0) + " XOF";
+
+document.getElementById("lvl3_gain").innerText =
+(userData.gain_niveau3 || 0) + " XOF";
+
+}
+
+/* COPY */
+function copyLink(){
+let text = document.getElementById("refLink").innerText;
+
+navigator.clipboard.writeText(text);
+
+let msg = document.getElementById("copyMsg");
+msg.style.display = "block";
+
+setTimeout(()=>{
+    msg.style.display = "none";
+},2000);
+}
+
+/* NAV */
+function goAccueil(){location.href="acceuil.html";}
+function goPortefeuille(){location.href="portefeuille.html";}
+function goEquipe(){location.href="equipe.html";}
+function goProfil(){location.href="profil.html";}
+
+window.onload = loadData;
+
+</script>
+
+</body>
+</html>

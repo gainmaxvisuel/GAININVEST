@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Accueil</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+/* BACKGROUND GLOBAL */
+body{
+    margin:0;
+    font-family:Arial;
+    color:white;
+    padding:10px;
+    padding-bottom:80px;
+    background:#020617;
+    position:relative;
+}
+
+/* LOGO FILIGRANE */
+body::before{
+    content:"";
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:300px;
+    height:300px;
+    background:url('gaininvest-logo.png') no-repeat center;
+    background-size:contain;
+    opacity:0.05;
+    z-index:0;
+    animation:floatLogo 6s ease-in-out infinite;
+}
+
+/* ANIMATION LOGO */
+@keyframes floatLogo{
+    0%{transform:translate(-50%,-50%) scale(1);}
+    50%{transform:translate(-50%,-52%) scale(1.03);}
+    100%{transform:translate(-50%,-50%) scale(1);}
+}
+
+/* CONTENU AU-DESSUS */
+body *{
+    position:relative;
+    z-index:1;
+}
+
+/* CARTE SOLDE */
+.balance{
+    background:linear-gradient(135deg,#1e293b,#020617);
+    padding:30px;
+    border-radius:18px;
+    margin-bottom:20px;
+    box-shadow:0 0 20px rgba(250,204,21,0.15);
+}
+.email{
+    font-size:14px;
+    color:#94a3b8;
+}
+.solde{
+    font-size:36px;
+    font-weight:bold;
+    margin-top:10px;
+    color:#facc15;
+}
+
+/* ACTIVITE */
+.activity{
+    background:#1e293b;
+    padding:12px;
+    border-radius:12px;
+    overflow:hidden;
+    white-space:nowrap;
+    margin-bottom:15px;
+}
+.activity span{
+    display:inline-block;
+    padding-left:100%;
+    animation:scroll 12s linear infinite;
+    color:#facc15;
+}
+@keyframes scroll{
+    100%{transform:translateX(-100%);}
+}
+
+/* ACTIONS */
+.actions{
+    display:flex;
+    justify-content:space-around;
+    margin:20px 0;
+}
+.box{
+    width:30%;
+    text-align:center;
+}
+.box img{
+    width:65px;
+    height:65px;
+}
+.box p{
+    font-size:13px;
+}
+
+/* VIP */
+.vip{
+    background:#1e293b;
+    margin-bottom:15px;
+    padding:15px;
+    border-radius:15px;
+    display:flex;
+    gap:15px;
+    align-items:center;
+}
+.vip img{
+    width:120px;
+    height:120px;
+    border-radius:12px;
+}
+.vip-info{
+    flex:1;
+}
+.vip button{
+    background:#facc15;
+    color:black;
+    border:none;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+/* MENU */
+.menu{
+    position:fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    background:#020617;
+    display:flex;
+    justify-content:space-around;
+    padding:10px 0;
+}
+.menu img{
+    width:28px;
+}
+
+/* POPUP */
+.popup{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    justify-content:center;
+    align-items:center;
+}
+.popup-box{
+    background:#0f172a;
+    padding:20px;
+    border-radius:15px;
+    width:85%;
+    text-align:center;
+}
+
+.loader{
+    border:4px solid #1e293b;
+    border-top:4px solid #facc15;
+    border-radius:50%;
+    width:40px;
+    height:40px;
+    animation:spin 1s linear infinite;
+    margin:10px auto;
+}
+@keyframes spin{
+    100%{transform:rotate(360deg);}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="balance">
+    <div class="email" id="email">ID : ---</div>
+    <div class="solde" id="solde">Solde disponible : 0 XOF</div>
+</div>
+
+<div class="activity">
+    <span id="activityText">Chargement...</span>
+</div>
+
+<div class="actions">
+    <div class="box" onclick="go('recharge.html')">
+        <img src="btn-recharge.png"><p>Recharger</p>
+    </div>
+
+    <div class="box" onclick="go('retrait.html')">
+        <img src="btn-withdraw.png"><p>Retrait</p>
+    </div>
+
+    <div class="box" onclick="go('mes-vip.html')">
+        <img src="btn-myvip.png"><p>MesVIP</p>
+    </div>
+</div>
+
+<div id="vipList"></div>
+
+<div class="menu">
+    <div onclick="go('index.html')">
+        <img src="menu-home.png"><p>Accueil</p>
+    </div>
+    <div onclick="go('portefeuille.html')">
+        <img src="btn-recharge.png"><p>Portefeuille</p>
+    </div>
+    <div onclick="go('equipe.html')">
+        <img src="menu-team.png"><p>Équipe</p>
+    </div>
+    <div onclick="go('profil.html')">
+        <img src="menu-profile.png"><p>Profil</p>
+    </div>
+</div>
+
+<div id="popup" class="popup">
+    <div class="popup-box">
+        <div id="popupContent"></div>
+    </div>
+</div>
+
+<script>
+
+function go(page){
+    window.location.href = page;
+}
+
+const supabaseClient = supabase.createClient(
+"https://wkpwfvuuadrgumssrkgk.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"
+);
+
+/* USER */
+async function loadUser(){
+
+    let { data:{user} } = await supabaseClient.auth.getUser();
+    if(!user) return;
+
+    let { data } = await supabaseClient
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+    if(data){
+        document.getElementById("email").innerText =
+        "ID : " + (data.user_code || "----");
+
+        document.getElementById("solde").innerText =
+        "Solde disponible : " + data.solde + " XOF";
+    }
+}
+
+/* MASQUE EMAIL */
+function maskEmail(text){
+    return text.replace(
+        /([a-zA-Z0-9._%+-]{2})[a-zA-Z0-9._%+-]*@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g,
+        "$1***@$2"
+    );
+}
+
+/* ACTIVITES */
+async function loadActivity(){
+    let { data } = await supabaseClient
+    .from("activities")
+    .select("*")
+    .order("created_at",{ascending:false})
+    .limit(5);
+
+    if(data){
+        let messages = data.map(a=>maskEmail(a.message));
+        document.getElementById("activityText").innerText =
+        messages.join(" 🔸 ");
+    }
+}
+
+/* VIP */
+let currentVIP=null;
+let currentPrix=0;
+
+async function loadVIP(){
+    let { data } = await supabaseClient.from("vip_plans").select("*");
+
+    let html="";
+
+    data.forEach((v,i)=>{
+        html+=`
+        <div class="vip">
+            <img src="vip${i+1}.png">
+            <div class="vip-info">
+                <h3>${v.nom}</h3>
+                <p>Prix: ${v.prix} XOF</p>
+                <p>Revenu: ${v.revenu_journalier}/jour</p>
+                <p>Cycle: ${v.duree} jours</p>
+                <p>Total: ${v.revenu_total} XOF</p>
+                <button onclick="openPopup('${v.id}',${v.prix})">Investir</button>
+            </div>
+        </div>`;
+    });
+
+    document.getElementById("vipList").innerHTML = html;
+}
+
+function openPopup(id, prix){
+    currentVIP = id;
+    currentPrix = prix;
+
+    document.getElementById("popupContent").innerHTML = `
+        <h3>Confirmation</h3>
+        <p>Confirmer cet investissement ?</p>
+        <button onclick="confirmBuy()">Confirmer</button>
+        <button onclick="closePopup()">Annuler</button>
+    `;
+
+    document.getElementById("popup").style.display = "flex";
+}
+
+function closePopup(){
+    document.getElementById("popup").style.display = "none";
+}
+
+async function confirmBuy(){
+
+    document.getElementById("popupContent").innerHTML =
+    `<div class="loader"></div><p>Traitement...</p>`;
+
+    let { data:{user} } = await supabaseClient.auth.getUser();
+
+    let { data:profil } = await supabaseClient
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+    if(profil.solde < currentPrix){
+        document.getElementById("popupContent").innerHTML =
+        `<p>Solde insuffisant</p><button onclick="closePopup()">OK</button>`;
+        return;
+    }
+
+    let { data:vipPlan } = await supabaseClient
+    .from("vip_plans")
+    .select("*")
+    .eq("id", currentVIP)
+    .single();
+
+    await supabaseClient
+    .from("users")
+    .update({ solde: profil.solde - currentPrix })
+    .eq("id", user.id);
+
+    await supabaseClient.from("user_vips").insert({
+        user_id: user.id,
+        vip_id: currentVIP,
+        prix: vipPlan.prix,
+        revenu_journalier: vipPlan.revenu_journalier,
+        revenu_total: vipPlan.revenu_total,
+        jours_restants: vipPlan.duree,
+        gains_total: 0,
+        statut: "actif"
+    });
+
+    await supabaseClient.from("activities").insert([{
+        message:"Investissement VIP effectué"
+    }]);
+
+    document.getElementById("popupContent").innerHTML =
+    `<p>Investissement réussi</p>
+     <button onclick="location.reload()">OK</button>`;
+}
+
+loadUser();
+loadActivity();
+loadVIP();
+
+</script>
+
+</body>
+</html>
