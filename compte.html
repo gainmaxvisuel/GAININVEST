@@ -1,0 +1,285 @@
+<!DOCTYPE html>  <html lang="fr">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Compte bancaire</title>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>  
+  
+body{  
+    margin:0;  
+    background:#020617;  
+    color:white;  
+    font-family:Arial;  
+    padding:15px;  
+}  
+  
+.header{  
+    display:flex;  
+    align-items:center;  
+    margin-bottom:20px;  
+}  
+  
+.back{  
+    font-size:20px;  
+    margin-right:10px;  
+    cursor:pointer;  
+}  
+  
+#msg{  
+    position:fixed;  
+    top:20px;  
+    left:50%;  
+    transform:translateX(-50%);  
+    background:#22c55e;  
+    padding:12px 20px;  
+    border-radius:10px;  
+    display:none;  
+}  
+  
+.card{  
+    background:#1e293b;  
+    padding:15px;  
+    border-radius:12px;  
+    margin-bottom:15px;  
+}  
+  
+.btn{  
+    background:#22c55e;  
+    padding:15px;  
+    border-radius:12px;  
+    text-align:center;  
+    cursor:pointer;  
+    margin-top:10px;  
+}  
+  
+.operateurs{  
+    display:flex;  
+    gap:10px;  
+    margin-bottom:15px;  
+}  
+  
+.op{  
+    flex:1;  
+    background:#1e293b;  
+    padding:15px;  
+    border-radius:12px;  
+    text-align:center;  
+    cursor:pointer;  
+    border:2px solid transparent;  
+}  
+  
+.op img{  
+    width:60px;  
+}  
+  
+.op.active{  
+    border:2px solid #facc15;  
+}  
+  
+.input{  
+    margin-bottom:10px;  
+}  
+  
+.input input{  
+    width:100%;  
+    padding:12px;  
+    border-radius:10px;  
+    border:none;  
+}  
+  
+.phone{  
+    display:flex;  
+    gap:10px;  
+}  
+  
+.code{  
+    background:#1e293b;  
+    padding:12px;  
+    border-radius:10px;  
+    border:none;  
+    color:white;  
+}  
+  
+</style>  </head>  <body>  <div id="msg"></div>  <div class="header">  
+    <div class="back" onclick="goBack()">←</div>  
+    <h3>Compte bancaire</h3>  
+</div>  <div id="content"></div>  <script>  
+  
+const supabaseClient = supabase.createClient(  
+    "https://wkpwfvuuadrgumssrkgk.supabase.co",  
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHdmdnV1YWRyZ3Vtc3Nya2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Mjc2NTMsImV4cCI6MjA4OTMwMzY1M30.8aHo4oU2ngD74VrYyO78R8cGltVAHmxLh-MtATtscG0"  
+);  
+  
+let operateur = "";  
+  
+function showMsg(text, color="#22c55e"){  
+    let msg = document.getElementById("msg");  
+    msg.innerText = text;  
+    msg.style.background = color;  
+    msg.style.display = "block";  
+  
+    setTimeout(()=> msg.style.display="none",3000);  
+}  
+  
+function goBack(){  
+    window.location.href="profil.html";  
+}  
+  
+async function loadPage(){  
+  
+    let { data:{user} } = await supabaseClient.auth.getUser();  
+  
+    let { data } = await supabaseClient  
+    .from("withdrawal_accounts")  
+    .select("*")  
+    .eq("user_id", user.id)  
+    .single();  
+  
+    if(data){  
+        showAccount(data);  
+    }else{  
+        showForm();  
+    }  
+}  
+  
+function showAccount(acc){  
+  
+    document.getElementById("content").innerHTML = `  
+        <div class="card">  
+            <b>Opérateur:</b> ${acc.operateur}<br><br>  
+            <b>Nom:</b> ${acc.nom}<br><br>  
+            <b>Numéro:</b> ${acc.numero}  
+        </div>  
+  
+        <div class="btn" onclick="showForm()">Modifier</div>  
+    `;  
+}  
+  
+function showForm(){  
+  
+    document.getElementById("content").innerHTML = `  
+  
+        <div class="operateurs">  
+  
+            <div class="op" onclick="selectOp('Orange Money')">  
+                <img src="orange-money.png">  
+                <div>Orange Money</div>  
+            </div>  
+  
+            <div class="op" onclick="selectOp('Moov Money')">  
+                <img src="moov-money.png">  
+                <div>Moov Money</div>  
+            </div>  
+  
+        </div>  
+  
+        <div class="input">  
+            <input id="nom" placeholder="Nom du titulaire">  
+        </div>  
+  
+        <div class="input phone">  
+              
+            <!-- MODIFICATION ICI -->  
+            <select id="country" class="code">  
+                <option value="">Pays</option>  
+                <option value="+226">🇧🇫 +226</option>  
+                <option value="+228">🇹🇬 +228</option>  
+                <option value="+229">🇧🇯 +229</option>  
+                <option value="+225">🇨🇮 +225</option>  
+                <option value="+223">🇲🇱 +223</option>  
+            </select>  
+  
+            <input id="numero" placeholder="Numéro">  
+        </div>  
+  
+        <div class="input">  
+            <input id="password" type="password" placeholder="Mot de passe transaction">  
+        </div>  
+  
+        <div class="btn" onclick="saveAccount()">Enregistrer</div>  
+    `;  
+}  
+  
+function selectOp(op){  
+  
+    operateur = op;  
+  
+    document.querySelectorAll(".op").forEach(e=> e.classList.remove("active"));  
+  
+    if(op==="Orange Money"){  
+        document.querySelectorAll(".op")[0].classList.add("active");  
+    }else{  
+        document.querySelectorAll(".op")[1].classList.add("active");  
+    }  
+}  
+  
+async function saveAccount(){  
+  
+    let nom = document.getElementById("nom").value;  
+    let numero = document.getElementById("numero").value;  
+  
+    // MODIFICATION ICI  
+    let country = document.getElementById("country").value;  
+  
+    let password = document.getElementById("password").value;  
+  
+    if(!operateur){  
+        showMsg("Choisis un opérateur","#ef4444");  
+        return;  
+    }  
+  
+    if(!nom || !numero || !password){  
+        showMsg("Remplis tous les champs","#ef4444");  
+        return;  
+    }  
+  
+    // MODIFICATION ICI  
+    if(!country){  
+        showMsg("Choisis un code pays","#ef4444");  
+        return;  
+    }  
+  
+    let { data:{user} } = await supabaseClient.auth.getUser();  
+  
+    let { data:exist } = await supabaseClient  
+    .from("withdrawal_accounts")  
+    .select("*")  
+    .eq("user_id", user.id)  
+    .single();  
+  
+    let query;  
+  
+    if(exist){  
+        query = supabaseClient  
+        .from("withdrawal_accounts")  
+        .update({  
+            nom,  
+            numero: country + numero, // MODIFICATION  
+            operateur,  
+            transaction_password:password  
+        })  
+        .eq("user_id", user.id);  
+    }else{  
+        query = supabaseClient  
+        .from("withdrawal_accounts")  
+        .insert([{  
+            user_id:user.id,  
+            nom,  
+            numero: country + numero, // MODIFICATION  
+            operateur,  
+            transaction_password:password  
+        }]);  
+    }  
+  
+    let { error } = await query;  
+  
+    if(error){  
+        showMsg("Erreur: "+error.message,"#ef4444");  
+    }else{  
+        showMsg("Compte enregistré");  
+        loadPage();  
+    }  
+}  
+  
+window.onload = loadPage;  
+  
+</script>  </body>  
+</html>
